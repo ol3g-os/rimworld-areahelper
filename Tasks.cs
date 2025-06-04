@@ -7,10 +7,8 @@ namespace AreaHelper
 {
     public static class Tasks
     {
-        private static void SelectArea(Area area, Pawn p)
+        public static void SelectArea(Area area, Pawn p, AreaSelectState selectState, AreaStateLayer layer = AreaStateLayer.Combined)
         {
-            if (!Event.current.shift && !Event.current.alt || Event.current.rawType != EventType.MouseUp) return;
-
             var current = AreaHelper.Current;
             var currentPawns = current.Pawns;
             var currentMaps = current.MapExtended;
@@ -30,18 +28,18 @@ namespace AreaHelper
             
             if (!pawnExtended.AreaStatesByMap.TryGetValue(mapId, out var pawnAreaStates))
                 pawnExtended.AreaStatesByMap.Add(mapId, pawnAreaStates = new AreaStates(mapExtended));
+
+            AreaHelper.LogMessage($"{nameof(SelectArea)}: select state={selectState}, layer={layer}, area={area}");
             
-            var include = Event.current.shift;
-            if (pawnAreaStates.States.TryGetValue(areaId, out var areaState) && areaState.Include == include)
-            {
-                pawnAreaStates.Remove(areaExtended);
-            }
+            if (selectState == AreaSelectState.Remove)
+                pawnAreaStates.Remove(areaExtended, layer);
             else
-            {
-                pawnAreaStates.Toggle(areaExtended, include);
-            }
+                pawnAreaStates.Toggle(areaExtended, selectState == AreaSelectState.Include, layer);
             
             var key = pawnAreaStates.Key;
+            
+            AreaHelper.LogMessage($"{nameof(SelectArea)}: new key={key}");
+            
             if (key == null)
             {
                 pawnAreaStates.AreaCombined = null;
@@ -49,44 +47,68 @@ namespace AreaHelper
             }
 
             var areaCombined = mapExtended.Areas.FirstOrDefault(x => x.AreaStates.Key == key);
-            
-            if (areaCombined == null)
+            if (areaCombined == null) // only create area, not change if found
             {
                 AreaHelper.LogMessage("Add new combined " + key);
-                mapExtended.Areas.Add(areaCombined = new AreaCombined(mapExtended));
-
-                foreach (var keyValueArea in pawnAreaStates.States)
-                    areaCombined.AreaStates.Toggle(keyValueArea.Value.AreaExtended, keyValueArea.Value.Include);
-            }
-            else
-            {
-                AreaHelper.LogMessage("Change exists combined " + key);
-                areaCombined.AreaStates.Toggle(areaExtended, include);
+                mapExtended.Areas.Add(areaCombined = new AreaCombined(mapExtended, pawnAreaStates));
             }
 
             pawnAreaStates.AreaCombined = areaCombined;
             // p.playerSettings.AreaRestrictionInPawnCurrentMap = areaCombined; // we save only in areaHelper node
         }
         
-        public static void DoAreaSelector(Rect rect, Area area, Pawn p)
+        public static void DoAreaSelector(Rect rect, Area area, Pawn p, bool dragging)
         {
-            if (area == null) return;
-
             AreaStates areaStates = null;
+            AreaState areaState = null;
+            var hasCombinedState = false;
+            var combinedState = false;
+            
             if (AreaHelper.Current.Pawns.TryGetValue(p.ThingID, out var pawnExtended) &&
-                pawnExtended.AreaStatesByMap.TryGetValue(area.Map.uniqueID, out areaStates) &&
-                areaStates.States.TryGetValue(area.ID, out var areaState))
+                pawnExtended.AreaStatesByMap.TryGetValue(p.Map.uniqueID, out areaStates) &&
+                area != null && areaStates.States.TryGetValue(area.ID, out areaState) &&
+                (hasCombinedState = areaState.TryGetLayerState(AreaStateLayer.Combined, out combinedState)))
             {
-                Widgets.DrawBox(rect, 2, areaState.Include ? Textures.GreenTex : Textures.RedTex);
+                Widgets.DrawBox(rect, 2, combinedState ? Textures.GreenTex : Textures.RedTex);
+            }
+            
+            var isMouseUp = Event.current.rawType == EventType.MouseUp;
+            var isLastSelected = area == _lastSelectedArea && p == _lastSelectedPawn;
+            if (isMouseUp && isLastSelected)
+            {
+                _lastSelectedArea = null;
+                _lastSelectedPawn = null;
+                return;
             }
 
             if (!Mouse.IsOver(rect)) return;
+            
+            var shiftPressed = Event.current.shift;
+            var altPressed = Event.current.alt;
+            var keyPressed = shiftPressed || altPressed;
+            if (keyPressed)
+                areaStates?.AreaCombined?.AreaStates.MarkForDraw();
+            
+            if (area == null || isLastSelected || !dragging || !keyPressed)
+                return;
 
-            if ((Event.current.shift || Event.current.alt) && areaStates != null)
-                areaStates.AreaCombined?.MarkForDraw();
-
-            SelectArea(area, p);
+            if (_lastSelectedArea == null || _lastSelectedPawn == null)
+            {
+                _currentAreaSelectState = shiftPressed ? AreaSelectState.Include : AreaSelectState.Exclude;
+                if (areaState != null && hasCombinedState && combinedState == shiftPressed)
+                    _currentAreaSelectState = AreaSelectState.Remove;
+            }
+            
+            if (!(_currentAreaSelectState == AreaSelectState.Remove && !hasCombinedState))
+                SelectArea(area, p, _currentAreaSelectState);
+            
+            _lastSelectedArea = area;
+            _lastSelectedPawn = p;
         }
+
+        private static AreaSelectState _currentAreaSelectState;
+        private static Area _lastSelectedArea;
+        private static Pawn _lastSelectedPawn;
 
         public static Area GetPawnArea(Pawn pawn)
         {

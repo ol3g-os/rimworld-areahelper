@@ -1,5 +1,6 @@
 using System;
 using AreaHelper.Data;
+using UnityEngine;
 using Verse;
 
 namespace AreaHelper.Extended
@@ -15,6 +16,8 @@ namespace AreaHelper.Extended
         public Area Area { get; set; }
 
         public AreaExtended() {}
+        
+        public Color Color { get; set; }
         
         public AreaExtended(Area area)
         {
@@ -44,6 +47,17 @@ namespace AreaHelper.Extended
 
         public void ExposeData()
         {
+        }
+
+        public void MarkForDraw(Color color)
+        {
+            Color = color;
+            Area.MarkForDraw();
+        }
+
+        public void AreaUpdate()
+        {
+            Color = Area.Color;
         }
     }
 }

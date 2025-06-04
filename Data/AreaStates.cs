@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AreaHelper.Extended;
+using UnityEngine;
 using Verse;
 
 namespace AreaHelper.Data
 {
-    public class AreaStates : IExposable
+    public class AreaStates : IExposable, IDisposable
     {
         private Dictionary<int, AreaState> _states;
         
@@ -24,8 +25,23 @@ namespace AreaHelper.Data
 
         public MapExtended MapExtended;
         
-        public AreaCombined AreaCombined;
+        private AreaCombined _areaCombined;
         
+        public AreaCombined AreaCombined
+        {
+            get => _areaCombined;
+            set
+            {
+                if (_areaCombined != null)
+                    _areaCombined.Destroyed -= OnAreaCombinedDestroyed;
+                
+                _areaCombined = value;
+                
+                if (_areaCombined != null)
+                    _areaCombined.Destroyed += OnAreaCombinedDestroyed;
+            }
+        }
+
         public AreaStates()
         {
         }
@@ -36,7 +52,7 @@ namespace AreaHelper.Data
             _states = new Dictionary<int, AreaState>();
         }
         
-        public void Toggle(AreaExtended area, bool state)
+        public void Toggle(AreaExtended area, bool state, AreaStateLayer layer = AreaStateLayer.Combined)
         {
             var id = area.Area.ID;
 
@@ -47,26 +63,53 @@ namespace AreaHelper.Data
                 area.Removed += OnAreaRemoved;
             }
 
-            areaState.Include = state;
-            Changed?.Invoke(this, areaState);
-            _key = BuildKey(_states);
+            areaState.ToggleLayer(layer, state);
+            
+            OnStateChanged(areaState);
         }
 
-        public void Remove(AreaExtended area)
+        /// <summary>
+        /// Remove state layer
+        /// </summary>
+        /// <param name="area"></param>
+        /// <param name="layer"></param>
+        public void Remove(AreaExtended area, AreaStateLayer layer = AreaStateLayer.Combined)
         {
-            var id = area.Area.ID;
-            var areaState = _states[id];
+            var areaState = _states[area.Area.ID];
+            areaState.RemoveLayer(layer);
 
-            _states.Remove(id);
-            
-            area.Removed -= OnAreaRemoved;
-            Removed?.Invoke(this, areaState);
+            if (areaState.HasState())
+                OnStateChanged(areaState);
+            else
+                Remove(areaState);
+        }
+
+        /// <summary>
+        /// Remove state
+        /// </summary>
+        /// <param name="areaState"></param>
+        public void Remove(AreaState areaState)
+        {
+            areaState.AreaExtended.Removed -= OnAreaRemoved;
+            _states.Remove(areaState.Area.ID);
             _key = BuildKey(_states);
+            Removed?.Invoke(this, areaState);
+        }
+
+        private void OnStateChanged(AreaState state)
+        {
+            _key = BuildKey(_states);
+            Changed?.Invoke(this, state);
         }
 
         private void OnAreaRemoved(object sender, AreaExtended area)
         {
-            Remove(area);
+            Remove(_states[area.Area.ID]);
+        }
+
+        private void OnAreaCombinedDestroyed(object sender, AreaCombined area)
+        {
+            AreaCombined = MapExtended.Areas.FirstOrDefault(x => x.AreaStates.Key == _key && x != area);
         }
 
         public void ExposeData()
@@ -75,13 +118,21 @@ namespace AreaHelper.Data
             Scribe_Collections.Look(ref _states, "states");
 
             if (Scribe.mode != LoadSaveMode.ResolvingCrossRefs) return;
-            
+
             foreach (var keyValue in _states)
                 keyValue.Value.AreaExtended = MapExtended.AreaExtended[keyValue.Key];
 
             if (_key == null) return;
             
             AreaCombined = MapExtended.Areas.FirstOrDefault(x => x.AreaStates.Key == _key);
+        }
+        
+        public void MarkForDraw()
+        {
+            foreach (var areaState in _states.Values)
+            {
+                areaState.AreaExtended.MarkForDraw(areaState.Include ? Color.green : Color.red);
+            }
         }
         
         public static string BuildKey(Dictionary<int, AreaState> combinedFrom)
@@ -94,6 +145,15 @@ namespace AreaHelper.Data
                 .Select(x => x.Key + ":" + (x.Value.Include ? "1" : "0"));
             
             return string.Join(",", keys);
+        }
+
+        public void Dispose()
+        {
+            foreach (var state in _states.Values)
+                state.AreaExtended.Removed -= OnAreaRemoved;
+            
+            if (_areaCombined != null)
+                _areaCombined.Destroyed -= OnAreaCombinedDestroyed;
         }
     }
 }

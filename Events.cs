@@ -1,3 +1,5 @@
+using AreaHelper.Data;
+using UnityEngine;
 using Verse;
 
 namespace AreaHelper
@@ -83,6 +85,40 @@ namespace AreaHelper
 
             foreach (var area in map.Areas)
                 area.AreaUpdate();
+        }
+
+        public static Color FireGetAreaColor(Area area)
+        {
+            var extended = AreaHelper.Current.GetExtended(area);
+            return extended?.Color ?? area.Color;
+        }
+
+        public static void FireAreaUpdate(Area area)
+        {
+            AreaHelper.Current.GetExtended(area)?.AreaUpdate();
+        }
+
+        public static bool FireBeforeAreaRestrictionInPawnCurrentMapSet(Pawn pawn)
+        {
+            // if key pressed we set include/exclude, default area(white) change is prevented
+            if (Event.current.shift || Event.current.alt) return false;
+            
+            var area = pawn.playerSettings.AreaRestrictionInPawnCurrentMap;
+            if (area == null) return true;
+            
+            Tasks.SelectArea(area, pawn, AreaSelectState.Remove, AreaStateLayer.Default);
+            
+            return true;
+        }
+
+        public static void FireAreaRestrictionInPawnCurrentMapSet(Pawn pawn)
+        {
+            if (Event.current.shift || Event.current.alt) return;
+            
+            var area = pawn.playerSettings.AreaRestrictionInPawnCurrentMap;
+            if (area == null) return;
+            
+            Tasks.SelectArea(area, pawn, AreaSelectState.Include,  AreaStateLayer.Default);
         }
     }
 }

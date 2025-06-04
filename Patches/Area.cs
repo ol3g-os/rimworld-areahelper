@@ -32,4 +32,25 @@ namespace AreaHelper.Patches
             Events.FireExposeData(__instance);
         }
     }
+    
+    // [HarmonyPatch(typeof(Area))]
+    // [HarmonyPatch(nameof(Area.Color))]
+    // [HarmonyPatch(MethodType.Getter)]
+    // public class Area_Color_Get_Patch
+    // {
+    //     static void Postfix(ref Area ___area, ref Color __result)
+    //     {
+    //         __result = Events.FireGetAreaColor(___area);
+    //     }
+    // }
+    
+    [HarmonyPatch(typeof(Area))]
+    [HarmonyPatch(nameof(Area.AreaUpdate))]
+    public class Area_AreaUpdate_Patch
+    {
+        static void Postfix(Area __instance)
+        {
+            Events.FireAreaUpdate(__instance);
+        }
+    }
 }

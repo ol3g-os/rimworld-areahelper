@@ -66,7 +66,9 @@
         <Compile Include="AreaCombined.cs" />
         <Compile Include="AreaHelper.cs" />
         <Compile Include="Data\AreaChangedArgs.cs" />
+        <Compile Include="Data\AreaSelectState.cs" />
         <Compile Include="Data\AreaState.cs" />
+        <Compile Include="Data\AreaStateLayer.cs" />
         <Compile Include="Data\AreaStates.cs" />
         <Compile Include="DebugActions.cs" />
         <Compile Include="Events.cs" />

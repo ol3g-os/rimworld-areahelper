@@ -24,16 +24,27 @@ namespace AreaHelper
         public AreaStates AreaStates => _areaStates;
 
         public MapExtended MapExtended { get; set; }
+        
+        public event EventHandler<AreaCombined> Destroyed;
 
         public AreaCombined()
         {
         }
-        
-        public AreaCombined(MapExtended mapExtended) : base(mapExtended.Map.areaManager)
+
+        public AreaCombined(MapExtended mapExtended, AreaStates areaStates) : base(mapExtended.Map.areaManager)
         {
             MapExtended = mapExtended;
             _areaStates = new AreaStates(mapExtended);
             Subscribe(_areaStates);
+            
+            foreach (var keyValueArea in areaStates.States)
+            {
+                if (keyValueArea.Value.TryGetLayerState(AreaStateLayer.Combined, out var state))
+                    _areaStates.Toggle(keyValueArea.Value.AreaExtended, state);
+                    
+                if (keyValueArea.Value.TryGetLayerState(AreaStateLayer.Default, out state))
+                    _areaStates.Toggle(keyValueArea.Value.AreaExtended, state, AreaStateLayer.Default);
+            }
         }
 
         public override void ExposeData()
@@ -62,6 +73,15 @@ namespace AreaHelper
             
             foreach (var areaState in _areaStates.States.Values)
                 Unsubscribe(areaState.AreaExtended);
+            
+            _areaStates.Dispose();
+        }
+
+        private void Destroy()
+        {
+            Dispose();
+            MapExtended.Areas.Remove(this);
+            Destroyed?.Invoke(this, this);
         }
 
         private void OnAreaStateChanged(object sender, AreaState areaState)
@@ -76,6 +96,13 @@ namespace AreaHelper
 
         private void OnAreaStateRemoved(object sender, AreaState areaState)
         {
+            if (_areaStates.Key == null || 
+                MapExtended.Areas.FindAll(x => x.AreaStates.Key == _areaStates.Key).Count > 1)
+            {
+                Destroy();
+                return;
+            }
+
             Unsubscribe(areaState.AreaExtended);
             Calculate(areaState.Area);
         }
