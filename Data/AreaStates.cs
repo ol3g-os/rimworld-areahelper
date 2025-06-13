@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AreaHelper.Extended;
-using UnityEngine;
 using Verse;
 
 namespace AreaHelper.Data
@@ -17,11 +16,11 @@ namespace AreaHelper.Data
         
         public string Key => _key;
 
-        public EventHandler<AreaState> Removed;
+        public event EventHandler<AreaState> Removed;
         
-        public EventHandler<AreaState> Added;
+        public event EventHandler<AreaState> Added;
         
-        public EventHandler<AreaState> Changed;
+        public event EventHandler<AreaState> Changed;
 
         public MapExtended MapExtended;
         
@@ -96,6 +95,21 @@ namespace AreaHelper.Data
             Removed?.Invoke(this, areaState);
         }
 
+        public void Remove(int id)
+        {
+            Remove(_states[id]);
+        }
+
+        public bool HasIncludedState()
+        {
+            return _states.Values.Any(x => x.Include);
+        }
+
+        public bool HasLayerByArea(int id, AreaStateLayer layer)
+        {
+            return _states.ContainsKey(id) && _states[id].TryGetLayerState(layer, out _);
+        }
+
         private void OnStateChanged(AreaState state)
         {
             _key = BuildKey(_states);
@@ -118,21 +132,16 @@ namespace AreaHelper.Data
             Scribe_Collections.Look(ref _states, "states");
 
             if (Scribe.mode != LoadSaveMode.ResolvingCrossRefs) return;
-
+            
             foreach (var keyValue in _states)
+            {
                 keyValue.Value.AreaExtended = MapExtended.AreaExtended[keyValue.Key];
+                keyValue.Value.AreaExtended.Removed += OnAreaRemoved;
+            }
 
             if (_key == null) return;
             
             AreaCombined = MapExtended.Areas.FirstOrDefault(x => x.AreaStates.Key == _key);
-        }
-        
-        public void MarkForDraw()
-        {
-            foreach (var areaState in _states.Values)
-            {
-                areaState.AreaExtended.MarkForDraw(areaState.Include ? Color.green : Color.red);
-            }
         }
         
         public static string BuildKey(Dictionary<int, AreaState> combinedFrom)

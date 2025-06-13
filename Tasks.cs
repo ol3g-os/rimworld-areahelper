@@ -26,16 +26,40 @@ namespace AreaHelper
             if (!mapExtended.AreaExtended.TryGetValue(areaId, out var areaExtended))
                 mapExtended.AreaExtended.Add(areaId, areaExtended = new AreaExtended(area));
             
+            if (!mapExtended.AreaExtended.TryGetValue(mapExtended.AreaFullFilled.ID, out var areaFullFilled))
+                mapExtended.AreaExtended.Add(mapExtended.AreaFullFilled.ID, areaFullFilled = new AreaExtended(mapExtended.AreaFullFilled));
+            
             if (!pawnExtended.AreaStatesByMap.TryGetValue(mapId, out var pawnAreaStates))
                 pawnExtended.AreaStatesByMap.Add(mapId, pawnAreaStates = new AreaStates(mapExtended));
-
+            
+            if (!pawnAreaStates.States.ContainsKey(areaId) && selectState == AreaSelectState.Remove)
+                return;
+            
             AreaHelper.LogMessage($"{nameof(SelectArea)}: select state={selectState}, layer={layer}, area={area}");
-            
+
+            var include = selectState == AreaSelectState.Include;
             if (selectState == AreaSelectState.Remove)
+            {
                 pawnAreaStates.Remove(areaExtended, layer);
+            }
             else
-                pawnAreaStates.Toggle(areaExtended, selectState == AreaSelectState.Include, layer);
-            
+            {
+                if (include && pawnAreaStates.States.ContainsKey(areaFullFilled.Area.ID) && areaExtended != areaFullFilled)
+                {
+                    AreaHelper.LogMessage($"{nameof(SelectArea)}: remove area fulfilled default");
+                    pawnAreaStates.Remove(areaFullFilled, AreaStateLayer.Default);
+                }
+
+                AreaHelper.LogMessage($"{nameof(SelectArea)}: toggle area fulfilled {layer} {include}");
+                pawnAreaStates.Toggle(areaExtended, include, layer);
+            }
+
+            if (!pawnAreaStates.HasIncludedState() && areaExtended != areaFullFilled)
+            {
+                AreaHelper.LogMessage($"{nameof(SelectArea)}: toggle area fulfilled default");
+                pawnAreaStates.Toggle(areaFullFilled, true, AreaStateLayer.Default);
+            }
+
             var key = pawnAreaStates.Key;
             
             AreaHelper.LogMessage($"{nameof(SelectArea)}: new key={key}");
@@ -64,6 +88,12 @@ namespace AreaHelper
             var hasCombinedState = false;
             var combinedState = false;
             
+            if (!AreaHelper.Current.MapExtended.TryGetValue(p.Map.uniqueID, out var mapExtended))
+                AreaHelper.Current.MapExtended.Add(p.Map.uniqueID, mapExtended = new MapExtended(p.Map));
+            
+            if (area == null)
+                area = mapExtended.AreaFullFilled;
+            
             if (AreaHelper.Current.Pawns.TryGetValue(p.ThingID, out var pawnExtended) &&
                 pawnExtended.AreaStatesByMap.TryGetValue(p.Map.uniqueID, out areaStates) &&
                 area != null && areaStates.States.TryGetValue(area.ID, out areaState) &&
@@ -86,9 +116,14 @@ namespace AreaHelper
             var shiftPressed = Event.current.shift;
             var altPressed = Event.current.alt;
             var keyPressed = shiftPressed || altPressed;
-            if (keyPressed)
-                areaStates?.AreaCombined?.AreaStates.MarkForDraw();
-            
+            if (keyPressed && areaStates != null)
+            {
+                var ffId = mapExtended.AreaFullFilled.ID;
+                var hasFullFilledDefaultLayer = areaStates.HasLayerByArea(ffId, AreaStateLayer.Default);
+                var hasFullFilledCombinedLayer = areaStates.HasLayerByArea(ffId, AreaStateLayer.Combined);
+                areaStates.AreaCombined?.MarkForDrawAll(!hasFullFilledDefaultLayer || hasFullFilledCombinedLayer);
+            }
+
             if (area == null || isLastSelected || !dragging || !keyPressed)
                 return;
 

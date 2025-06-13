@@ -30,6 +30,7 @@ namespace AreaHelper.Data
 
         public void ToggleLayer(AreaStateLayer layer, bool state)
         {
+            AreaHelper.LogMessage($"{nameof(AreaState)}: {nameof(ToggleLayer)}: {Area.ID} toggleLayer={layer}, state={state}");
             _layers.SetOrAdd(layer, state);
         }
         

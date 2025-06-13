@@ -24,7 +24,9 @@ namespace AreaHelper
         public AreaStates AreaStates => _areaStates;
 
         public MapExtended MapExtended { get; set; }
-        
+
+        private AreaExcluded AreaExcluded { get; set; }
+
         public event EventHandler<AreaCombined> Destroyed;
 
         public AreaCombined()
@@ -34,6 +36,7 @@ namespace AreaHelper
         public AreaCombined(MapExtended mapExtended, AreaStates areaStates) : base(mapExtended.Map.areaManager)
         {
             MapExtended = mapExtended;
+            AreaExcluded = new AreaExcluded(areaManager);
             _areaStates = new AreaStates(mapExtended);
             Subscribe(_areaStates);
             
@@ -47,6 +50,20 @@ namespace AreaHelper
             }
         }
 
+        public void MarkForDrawAll(bool drawIncluded = true)
+        {
+            if (drawIncluded)
+                MarkForDraw();
+            
+            AreaExcluded.MarkForDraw();
+        }
+
+        public void AreaUpdateAll()
+        {
+            AreaUpdate();
+            AreaExcluded.AreaUpdate();
+        }
+
         public override void ExposeData()
         {
             base.ExposeData();
@@ -57,6 +74,7 @@ namespace AreaHelper
             {
                 areaManager = MapExtended.Map.areaManager;
                 AreaStates.MapExtended = MapExtended;
+                AreaExcluded = new AreaExcluded(areaManager);
             }
             else if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
@@ -64,6 +82,8 @@ namespace AreaHelper
             
                 foreach (var areaState in _areaStates.States.Values)
                     Subscribe(areaState.AreaExtended);
+                
+                AreaExcluded.Calculate(_areaStates);
             }
         }
 
@@ -131,6 +151,7 @@ namespace AreaHelper
             if (exclude)
             {
                 this[cell] = false;
+                AreaExcluded.Calculate(cell, true);
                 return;
             }
 
@@ -152,10 +173,13 @@ namespace AreaHelper
                 AreaHelper.LogMessage($"Calculate result ${state}");
             
             this[cell] = state;
+            AreaExcluded.Calculate(cell, !state);
         }
 
         private void Calculate()
         {
+            AreaExcluded.Calculate(_areaStates);
+            
             var orderedAreas = _areaStates.States.OrderByDescending(x => x.Value.Include);
             
             foreach (var allCell in ActiveCells)

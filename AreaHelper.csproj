@@ -64,6 +64,8 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="AreaCombined.cs" />
+        <Compile Include="AreaExcluded.cs" />
+        <Compile Include="AreaFullFilled.cs" />
         <Compile Include="AreaHelper.cs" />
         <Compile Include="Data\AreaChangedArgs.cs" />
         <Compile Include="Data\AreaSelectState.cs" />

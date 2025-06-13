@@ -1,4 +1,6 @@
 using HarmonyLib;
+using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace AreaHelper.Patches
@@ -32,25 +34,16 @@ namespace AreaHelper.Patches
             Events.FireExposeData(__instance);
         }
     }
-    
-    // [HarmonyPatch(typeof(Area))]
-    // [HarmonyPatch(nameof(Area.Color))]
-    // [HarmonyPatch(MethodType.Getter)]
-    // public class Area_Color_Get_Patch
-    // {
-    //     static void Postfix(ref Area ___area, ref Color __result)
-    //     {
-    //         __result = Events.FireGetAreaColor(___area);
-    //     }
-    // }
-    
+
     [HarmonyPatch(typeof(Area))]
-    [HarmonyPatch(nameof(Area.AreaUpdate))]
-    public class Area_AreaUpdate_Patch
+    [HarmonyPatch(nameof(Area.MarkForDraw))]
+    public class Area_MarkForDraw_Patch
     {
-        static void Postfix(Area __instance)
+        static bool Prefix(Area __instance)
         {
-            Events.FireAreaUpdate(__instance);
+            var keyPressed = Event.current.alt || Event.current.shift;
+            var isCoreArea = __instance is Area_Allowed || __instance is Area_Home;
+            return !keyPressed || !isCoreArea;
         }
     }
 }

@@ -84,27 +84,18 @@ namespace AreaHelper
             if (map == null) return;
 
             foreach (var area in map.Areas)
-                area.AreaUpdate();
-        }
-
-        public static Color FireGetAreaColor(Area area)
-        {
-            var extended = AreaHelper.Current.GetExtended(area);
-            return extended?.Color ?? area.Color;
-        }
-
-        public static void FireAreaUpdate(Area area)
-        {
-            AreaHelper.Current.GetExtended(area)?.AreaUpdate();
+                area.AreaUpdateAll();
         }
 
         public static bool FireBeforeAreaRestrictionInPawnCurrentMapSet(Pawn pawn)
         {
             // if key pressed we set include/exclude, default area(white) change is prevented
-            if (Event.current.shift || Event.current.alt) return false;
+            if (Event.current.shift || Event.current.alt) 
+                return false;
             
             var area = pawn.playerSettings.AreaRestrictionInPawnCurrentMap;
-            if (area == null) return true;
+            if (area == null)
+                return true;
             
             Tasks.SelectArea(area, pawn, AreaSelectState.Remove, AreaStateLayer.Default);
             
@@ -113,10 +104,12 @@ namespace AreaHelper
 
         public static void FireAreaRestrictionInPawnCurrentMapSet(Pawn pawn)
         {
-            if (Event.current.shift || Event.current.alt) return;
+            if (Event.current.shift || Event.current.alt) 
+                return;
             
             var area = pawn.playerSettings.AreaRestrictionInPawnCurrentMap;
-            if (area == null) return;
+            if (area == null) 
+                return;
             
             Tasks.SelectArea(area, pawn, AreaSelectState.Include,  AreaStateLayer.Default);
         }

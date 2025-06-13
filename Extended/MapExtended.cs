@@ -17,6 +17,8 @@ namespace AreaHelper.Extended
 
         public Map Map { get; set; }
         
+        public AreaFullFilled AreaFullFilled { get; private set; }
+        
         public MapExtended() {}
         
         public MapExtended(Map map)
@@ -24,6 +26,7 @@ namespace AreaHelper.Extended
             Map = map;
             _areas = new List<AreaCombined>();
             _areaExtended = new Dictionary<int, AreaExtended>();
+            AreaFullFilled = new AreaFullFilled(map.areaManager);
         }
 
         public void ExposeData()
@@ -35,6 +38,10 @@ namespace AreaHelper.Extended
             if (Scribe.mode != LoadSaveMode.ResolvingCrossRefs) return;
             
             Map = Current.Game.Maps.FirstOrDefault(x => x.uniqueID == _id);
+            AreaFullFilled = new AreaFullFilled(Map.areaManager);
+            var areaFullAreaExtended = AreaHelper.Current.GetExtended(AreaFullFilled);
+            if (areaFullAreaExtended != null)
+                areaFullAreaExtended.Area = AreaFullFilled;
 
             foreach (var areaCombined in Areas)
             {
