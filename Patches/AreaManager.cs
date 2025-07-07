@@ -12,6 +12,22 @@ namespace AreaHelper.Patches
             Events.FireAreaRemoved(area);
         }
     }
+    
+    [HarmonyPatch(typeof(AreaManager))]
+    [HarmonyPatch(nameof(AreaManager.ExposeData))]
+    public class AreaManager_ExposeData_Patch
+    {
+        static void Prefix(AreaManager __instance)
+        {
+            Events.FireBeforeExposeData(__instance);
+        }
+        
+        static void Postfix(AreaManager __instance)
+        {
+            Events.FireExposeData(__instance);
+        }
+    }
+    
     [HarmonyPatch(typeof(AreaManager))]
     [HarmonyPatch(nameof(AreaManager.AreaManagerUpdate))]
     public class AreaManager_AreaManagerUpdate_Patch

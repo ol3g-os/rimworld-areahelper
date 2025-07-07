@@ -31,13 +31,13 @@ namespace AreaHelper.Data
             get => _areaCombined;
             set
             {
-                if (_areaCombined != null)
-                    _areaCombined.Destroyed -= OnAreaCombinedDestroyed;
+                // if (_areaCombined != null)
+                //     _areaCombined.Destroyed -= OnAreaCombinedDestroyed;
                 
                 _areaCombined = value;
                 
-                if (_areaCombined != null)
-                    _areaCombined.Destroyed += OnAreaCombinedDestroyed;
+                // if (_areaCombined != null)
+                //     _areaCombined.Destroyed += OnAreaCombinedDestroyed;
             }
         }
 
@@ -92,6 +92,21 @@ namespace AreaHelper.Data
             areaState.AreaExtended.Removed -= OnAreaRemoved;
             _states.Remove(areaState.Area.ID);
             _key = BuildKey(_states);
+            
+            if (_areaCombined != null)
+            {
+                AreaHelper.LogMessage($"Area remove, find new area with key {_key}");
+                _areaCombined = MapExtended.Areas.FirstOrDefault(x => x.AreaStates.Key == _key);
+                AreaHelper.LogMessage($"Found {_areaCombined != null}");
+
+                if (_areaCombined == null)
+                {
+                    AreaHelper.LogMessage($"Try create and set new area with key {_key}");
+                    _areaCombined = new AreaCombined(MapExtended, this);
+                    MapExtended.Areas.Add(_areaCombined);
+                }
+            }
+
             Removed?.Invoke(this, areaState);
         }
 
@@ -121,10 +136,11 @@ namespace AreaHelper.Data
             Remove(_states[area.Area.ID]);
         }
 
-        private void OnAreaCombinedDestroyed(object sender, AreaCombined area)
-        {
-            AreaCombined = MapExtended.Areas.FirstOrDefault(x => x.AreaStates.Key == _key && x != area);
-        }
+        // private void OnAreaCombinedDestroyed(object sender, AreaCombined area)
+        // {
+        //     AreaHelper.LogMessage($"AreaCombined destroyed, find new area with key {_key}");
+        //     AreaCombined = MapExtended.Areas.FirstOrDefault(x => x.AreaStates.Key == _key && x != area);
+        // }
 
         public void ExposeData()
         {
@@ -160,9 +176,9 @@ namespace AreaHelper.Data
         {
             foreach (var state in _states.Values)
                 state.AreaExtended.Removed -= OnAreaRemoved;
-            
-            if (_areaCombined != null)
-                _areaCombined.Destroyed -= OnAreaCombinedDestroyed;
+            //
+            // if (_areaCombined != null)
+            //     _areaCombined.Destroyed -= OnAreaCombinedDestroyed;
         }
     }
 }

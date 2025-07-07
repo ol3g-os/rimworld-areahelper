@@ -78,6 +78,25 @@ namespace AreaHelper
                 extended.Pawn = pawn;
         }
 
+        public static void FireBeforeExposeData(AreaManager areaManager)
+        {
+            if (Scribe.mode == LoadSaveMode.Saving)
+            {
+                areaManager.AllAreas.RemoveAll(x => x is AreaCombined);
+            }
+        }
+
+        public static void FireExposeData(AreaManager areaManager)
+        {
+            var mapExtended = AreaHelper.Current.GetExtended(areaManager.map);
+            if (mapExtended == null) return;
+            
+            if (Scribe.mode == LoadSaveMode.Saving)
+            {
+                areaManager.AllAreas.AddRange(mapExtended.Areas);
+            }
+        }
+
         public static void FireAreaManagerUpdate(AreaManager areaManager)
         {
             var map = AreaHelper.Current.GetExtended(areaManager.map);

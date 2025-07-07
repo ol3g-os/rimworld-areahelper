@@ -15,7 +15,7 @@ namespace AreaHelper
         
         public override Color Color => Color.green;
         
-        public override bool Mutable => true;
+        public override bool Mutable => false;
         
         public override int ListPriority => 500;
         
@@ -26,6 +26,8 @@ namespace AreaHelper
         public MapExtended MapExtended { get; set; }
 
         private AreaExcluded AreaExcluded { get; set; }
+
+        public bool IsDestroyed = false;
 
         public event EventHandler<AreaCombined> Destroyed;
 
@@ -48,10 +50,15 @@ namespace AreaHelper
                 if (keyValueArea.Value.TryGetLayerState(AreaStateLayer.Default, out state))
                     _areaStates.Toggle(keyValueArea.Value.AreaExtended, state, AreaStateLayer.Default);
             }
+            
+            mapExtended.Map.areaManager.AllAreas.Add(this);
         }
 
         public void MarkForDrawAll(bool drawIncluded = true)
         {
+            if (Prefs.LogVerbose)
+                AreaHelper.LogMessage($"Mark for draw {_areaStates.Key} {drawIncluded}");
+                
             if (drawIncluded)
                 MarkForDraw();
             
@@ -75,6 +82,7 @@ namespace AreaHelper
                 areaManager = MapExtended.Map.areaManager;
                 AreaStates.MapExtended = MapExtended;
                 AreaExcluded = new AreaExcluded(areaManager);
+                areaManager.AllAreas.Add(this);
             }
             else if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
@@ -101,6 +109,8 @@ namespace AreaHelper
         {
             Dispose();
             MapExtended.Areas.Remove(this);
+            Map.areaManager.AllAreas.Remove(this);
+            IsDestroyed = true;
             Destroyed?.Invoke(this, this);
         }
 
