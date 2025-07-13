@@ -161,7 +161,10 @@ namespace AreaHelper
             if (exclude)
             {
                 this[cell] = false;
-                AreaExcluded.Calculate(cell, true);
+                
+                if (AreaStates.States.Values.Any(x => x.Area.ActiveCells.Contains(cell) && !x.Include))
+                    AreaExcluded.Calculate(cell, true);
+                
                 return;
             }
 
@@ -183,7 +186,11 @@ namespace AreaHelper
                 AreaHelper.LogMessage($"Calculate result ${state}");
             
             this[cell] = state;
-            AreaExcluded.Calculate(cell, !state);
+            
+            if (state == false && AreaStates.States.Values.Any(x => x.Area.ActiveCells.Contains(cell) && !x.Include))
+                AreaExcluded.Calculate(cell, true);
+            else 
+                AreaExcluded.Calculate(cell, false);
         }
 
         private void Calculate()
