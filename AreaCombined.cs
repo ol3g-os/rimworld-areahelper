@@ -62,6 +62,8 @@ namespace AreaHelper
             if (drawIncluded)
                 MarkForDraw();
             
+            AreaExcluded.Calculate(_areaStates);
+            
             AreaExcluded.MarkForDraw();
         }
 
@@ -90,8 +92,9 @@ namespace AreaHelper
             
                 foreach (var areaState in _areaStates.States.Values)
                     Subscribe(areaState.AreaExtended);
-                
-                AreaExcluded.Calculate(_areaStates);
+
+                AreaExcluded.MarkDirty();
+                // AreaExcluded.Calculate(_areaStates);
             }
         }
 
@@ -161,9 +164,10 @@ namespace AreaHelper
             if (exclude)
             {
                 this[cell] = false;
-                
-                if (AreaStates.States.Values.Any(x => x.Area.ActiveCells.Contains(cell) && !x.Include))
-                    AreaExcluded.Calculate(cell, true);
+
+                AreaExcluded.MarkDirty();
+                // if (AreaStates.States.Values.Any(x => !x.Include && x.Area.ActiveCells.Contains(cell)))
+                //     AreaExcluded.Calculate(cell, true);
                 
                 return;
             }
@@ -186,16 +190,19 @@ namespace AreaHelper
                 AreaHelper.LogMessage($"Calculate result ${state}");
             
             this[cell] = state;
+
+            AreaExcluded.MarkDirty();
             
-            if (state == false && AreaStates.States.Values.Any(x => x.Area.ActiveCells.Contains(cell) && !x.Include))
-                AreaExcluded.Calculate(cell, true);
-            else 
-                AreaExcluded.Calculate(cell, false);
+            // if (state == false && AreaStates.States.Values.Any(x => !x.Include && x.Area.ActiveCells.Contains(cell)))
+            //     AreaExcluded.Calculate(cell, true);
+            // else 
+            //     AreaExcluded.Calculate(cell, false);
         }
 
         private void Calculate()
         {
-            AreaExcluded.Calculate(_areaStates);
+            AreaExcluded.MarkDirty();
+            // AreaExcluded.Calculate(_areaStates);
             
             var orderedAreas = _areaStates.States.OrderByDescending(x => x.Value.Include);
             

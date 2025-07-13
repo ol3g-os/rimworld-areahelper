@@ -16,6 +16,8 @@ namespace AreaHelper
         public override int ListPriority => 500;
 
         public override bool Mutable => true;
+
+        private bool _dirty;
         
         public AreaExcluded(AreaManager areaManager) : base(areaManager)
         {
@@ -26,8 +28,16 @@ namespace AreaHelper
             this[cell] = state;
         }
 
+        public void MarkDirty()
+        {
+            _dirty = true;
+        }
+
         public void Calculate(AreaStates areaStates)
         {
+            if (!_dirty)
+                return;
+            
             var excluded = areaStates.States.Where(x => !x.Value.Include);
             
             foreach (var allCell in ActiveCells)
@@ -36,6 +46,8 @@ namespace AreaHelper
             foreach (var areaState in excluded)
                 foreach (var cell in areaState.Value.Area.ActiveCells)
                     this[cell] = true;
+
+            _dirty = false;
         }
     }
 }
