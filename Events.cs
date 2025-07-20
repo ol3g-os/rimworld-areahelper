@@ -55,7 +55,9 @@ namespace AreaHelper
         
         public static void FireExposeData(Map map)
         {
-            if (Scribe.mode != LoadSaveMode.ResolvingCrossRefs) return;
+            // loading vars
+            // need refs for initialization in cross refs in mapExtended object
+            if (Scribe.mode != LoadSaveMode.LoadingVars) return;
             
             var extended = AreaHelper.Current.GetExtended(map);
             if (extended != null)

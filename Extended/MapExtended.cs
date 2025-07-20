@@ -6,8 +6,6 @@ namespace AreaHelper.Extended
 {
     public class MapExtended : IExposable, IDisposable
     {
-        private int _id;
-
         private List<AreaCombined> _areas;
         
         public List<AreaCombined> Areas => _areas;
@@ -31,13 +29,11 @@ namespace AreaHelper.Extended
 
         public void ExposeData()
         {
-            Scribe_Values.Look(ref _id, "id");
             Scribe_Collections.Look(ref _areaExtended, "areaExtended");
             Scribe_Collections.Look(ref _areas, "areas", LookMode.Deep);
 
             if (Scribe.mode != LoadSaveMode.ResolvingCrossRefs) return;
             
-            Map = Current.Game.Maps.FirstOrDefault(x => x.uniqueID == _id);
             AreaFullFilled = new AreaFullFilled(Map.areaManager);
             var areaFullAreaExtended = AreaHelper.Current.GetExtended(AreaFullFilled);
             if (areaFullAreaExtended != null)

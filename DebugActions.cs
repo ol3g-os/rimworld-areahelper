@@ -17,5 +17,18 @@ namespace AreaHelper
                 }
             }
         }
+        
+        [DebugAction(nameof(AreaHelper), nameof(AllAreas), actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.Playing)]
+        public static void AllAreas()
+        {
+            foreach (var mapExtended in AreaHelper.Current.MapExtended.Values)
+            {
+                AreaHelper.LogMessage($"map={mapExtended.Map.uniqueID}");
+                foreach (var area in mapExtended.Map.areaManager.AllAreas)
+                {
+                    AreaHelper.LogMessage($"key={area.ID} caption={area.Label}");
+                }
+            }
+        }
     }
 }
