@@ -28,8 +28,13 @@ namespace AreaHelper.Extended
 
             if (Scribe.mode != LoadSaveMode.ResolvingCrossRefs) return;
             
-            foreach (var areaState in AreaStatesByMap)
-                areaState.Value.MapExtended = AreaHelper.Current.MapExtended[areaState.Key];
+            var mapExtendedList = AreaHelper.Current.MapExtended;
+            _areaStatesByMap.RemoveAll(x => !mapExtendedList.ContainsKey(x.Key));
+
+            foreach (var areaState in _areaStatesByMap)
+            {
+                areaState.Value.MapExtended = mapExtendedList[areaState.Key];
+            }
         }
     }
 }

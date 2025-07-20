@@ -22,7 +22,7 @@ namespace AreaHelper.Data
         
         public event EventHandler<AreaState> Changed;
 
-        public MapExtended MapExtended;
+        public MapExtended MapExtended { get; set; }
         
         private AreaCombined _areaCombined;
         
@@ -148,6 +148,12 @@ namespace AreaHelper.Data
             Scribe_Collections.Look(ref _states, "states");
 
             if (Scribe.mode != LoadSaveMode.ResolvingCrossRefs) return;
+
+            if (MapExtended == null)
+            {
+                AreaHelper.LogMessage($"Failed to load AreaStates with id={_key}, MapExtended is null");
+                return;
+            }
             
             foreach (var keyValue in _states)
             {
