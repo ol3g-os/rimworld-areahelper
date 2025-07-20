@@ -1,4 +1,6 @@
 using AreaHelper.Data;
+using HarmonyLib;
+using RimWorld;
 using UnityEngine;
 using Verse;
 
@@ -109,7 +111,7 @@ namespace AreaHelper
         public static bool FireBeforeAreaRestrictionInPawnCurrentMapSet(Pawn pawn)
         {
             // if key pressed we set include/exclude, default area(white) change is prevented
-            if (Event.current.shift || Event.current.alt) 
+            if (IsSelectionActive())
                 return false;
             
             var area = pawn.playerSettings.AreaRestrictionInPawnCurrentMap;
@@ -123,7 +125,7 @@ namespace AreaHelper
 
         public static void FireAreaRestrictionInPawnCurrentMapSet(Pawn pawn)
         {
-            if (Event.current.shift || Event.current.alt) 
+            if (IsSelectionActive())
                 return;
             
             var area = pawn.playerSettings.AreaRestrictionInPawnCurrentMap;
@@ -131,6 +133,15 @@ namespace AreaHelper
                 return;
             
             Tasks.SelectArea(area, pawn, AreaSelectState.Include,  AreaStateLayer.Default);
+        }
+
+        private static bool IsSelectionActive()
+        {
+            // if key pressed we set include/exclude, default area(white) change is prevented
+            if (!Event.current.shift && !Event.current.alt) 
+                return false;
+            
+            return Traverse.Create(typeof(AreaAllowedGUI)).Field("dragging").GetValue<bool>();
         }
     }
 }
