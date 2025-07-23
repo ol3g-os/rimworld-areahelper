@@ -88,14 +88,14 @@ namespace AreaHelper
             var hasCombinedState = false;
             var combinedState = false;
             
-            if (!AreaHelper.Current.MapExtended.TryGetValue(p.Map.uniqueID, out var mapExtended))
-                AreaHelper.Current.MapExtended.Add(p.Map.uniqueID, mapExtended = new MapExtended(p.Map));
+            if (!AreaHelper.Current.MapExtended.TryGetValue(p.MapHeld.uniqueID, out var mapExtended))
+                AreaHelper.Current.MapExtended.Add(p.MapHeld.uniqueID, mapExtended = new MapExtended(p.MapHeld));
             
             if (area == null)
                 area = mapExtended.AreaFullFilled;
             
             if (AreaHelper.Current.Pawns.TryGetValue(p.ThingID, out var pawnExtended) &&
-                pawnExtended.AreaStatesByMap.TryGetValue(p.Map.uniqueID, out areaStates) &&
+                pawnExtended.AreaStatesByMap.TryGetValue(p.MapHeld.uniqueID, out areaStates) &&
                 area != null && areaStates.States.TryGetValue(area.ID, out areaState) &&
                 (hasCombinedState = areaState.TryGetLayerState(AreaStateLayer.Combined, out combinedState)))
             {
