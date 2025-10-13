@@ -154,7 +154,7 @@ namespace AreaHelper
             if (pawnExtended == null) 
                 return null;
             
-            if (!pawnExtended.AreaStatesByMap.TryGetValue(pawn.Map.uniqueID, out var areaStates))
+            if (!pawnExtended.AreaStatesByMap.TryGetValue(pawn.MapHeld.uniqueID, out var areaStates))
                 return null;
             
             if (Prefs.LogVerbose)
