@@ -21,7 +21,8 @@ namespace AreaHelper
 
         public static void LogMessage(string message)
         {
-            Log.Message($"{nameof(AreaHelper)}: {message}");
+            if (Prefs.LogVerbose)
+                Log.Message($"{nameof(AreaHelper)}: {message}");
         }
         
         private Dictionary<int, MapExtended> _mapExtended = new Dictionary<int, MapExtended>();

@@ -147,8 +147,8 @@ namespace AreaHelper
 
         public static Area GetPawnArea(Pawn pawn)
         {
-            if (Prefs.LogVerbose)
-                AreaHelper.LogMessage("GetPawnArea");
+            // if (Prefs.LogVerbose)
+            //     AreaHelper.LogMessage("GetPawnArea");
             
             var pawnExtended = AreaHelper.Current.GetExtended(pawn);
             if (pawnExtended == null) 
@@ -157,8 +157,8 @@ namespace AreaHelper
             if (!pawnExtended.AreaStatesByMap.TryGetValue(pawn.MapHeld.uniqueID, out var areaStates))
                 return null;
             
-            if (Prefs.LogVerbose)
-                AreaHelper.LogMessage($"PawnArea {pawn.ThingID}={areaStates.AreaCombined}");
+            // if (Prefs.LogVerbose)
+            //     AreaHelper.LogMessage($"PawnArea {pawn.ThingID}={areaStates.AreaCombined}");
             
             return areaStates.AreaCombined;
         }
