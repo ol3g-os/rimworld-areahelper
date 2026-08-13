@@ -1,14 +1,13 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using AreaHelper.Extended;
+using JetBrains.Annotations;
 using Verse;
 
 namespace AreaHelper.Data
 {
-    public class AreaStates : IExposable, IDisposable
+    public class AreaStates : IExposable
     {
-        private Dictionary<int, AreaState> _states;
+        private Dictionary<int, AreaState> _states = new Dictionary<int, AreaState>();
         
         public Dictionary<int, AreaState> States => _states;
         
@@ -16,159 +15,28 @@ namespace AreaHelper.Data
         
         public string Key => _key;
 
-        public event EventHandler<AreaState> Removed;
-        
-        public event EventHandler<AreaState> Added;
-        
-        public event EventHandler<AreaState> Changed;
-
-        public MapExtended MapExtended { get; set; }
-        
-        private AreaCombined _areaCombined;
-        
-        public AreaCombined AreaCombined
-        {
-            get => _areaCombined;
-            set
-            {
-                // if (_areaCombined != null)
-                //     _areaCombined.Destroyed -= OnAreaCombinedDestroyed;
-                
-                _areaCombined = value;
-                
-                // if (_areaCombined != null)
-                //     _areaCombined.Destroyed += OnAreaCombinedDestroyed;
-            }
-        }
-
+        [UsedImplicitly]
         public AreaStates()
         {
         }
-
-        public AreaStates(MapExtended mapExtended)
-        {
-            MapExtended = mapExtended;
-            _states = new Dictionary<int, AreaState>();
-        }
         
-        public void Toggle(AreaExtended area, bool state, AreaStateLayer layer = AreaStateLayer.Combined)
+        public AreaStates(AreaStates areaStates)
         {
-            var id = area.Area.ID;
-
-            if (!_states.TryGetValue(id, out var areaState))
-            {
-                _states.Add(id, areaState = new AreaState(area));
-                Added?.Invoke(this, areaState);
-                area.Removed += OnAreaRemoved;
-            }
-
-            areaState.ToggleLayer(layer, state);
-            
-            OnStateChanged(areaState);
+            _states = areaStates._states.ToDictionary(x => x.Key, x => new AreaState(x.Value));
+            _key = areaStates._key;
         }
 
-        /// <summary>
-        /// Remove state layer
-        /// </summary>
-        /// <param name="area"></param>
-        /// <param name="layer"></param>
-        public void Remove(AreaExtended area, AreaStateLayer layer = AreaStateLayer.Combined)
-        {
-            var areaState = _states[area.Area.ID];
-            areaState.RemoveLayer(layer);
-
-            if (areaState.HasState())
-                OnStateChanged(areaState);
-            else
-                Remove(areaState);
-        }
-
-        /// <summary>
-        /// Remove state
-        /// </summary>
-        /// <param name="areaState"></param>
-        public void Remove(AreaState areaState)
-        {
-            areaState.AreaExtended.Removed -= OnAreaRemoved;
-            _states.Remove(areaState.Area.ID);
-            _key = BuildKey(_states);
-            
-            if (_areaCombined != null)
-            {
-                AreaHelper.LogMessage($"Area remove, find new area with key {_key}");
-                _areaCombined = MapExtended.Areas.FirstOrDefault(x => x.AreaStates.Key == _key);
-                AreaHelper.LogMessage($"Found {_areaCombined != null}");
-
-                if (_areaCombined == null)
-                {
-                    AreaHelper.LogMessage($"Try create and set new area with key {_key}");
-                    _areaCombined = new AreaCombined(MapExtended, this);
-                    MapExtended.Areas.Add(_areaCombined);
-                }
-            }
-
-            Removed?.Invoke(this, areaState);
-        }
-
-        public void Remove(int id)
-        {
-            Remove(_states[id]);
-        }
-
-        public bool HasIncludedState()
-        {
-            return _states.Values.Any(x => x.Include);
-        }
-
-        public bool HasLayerByArea(int id, AreaStateLayer layer)
-        {
-            return _states.ContainsKey(id) && _states[id].TryGetLayerState(layer, out _);
-        }
-
-        private void OnStateChanged(AreaState state)
-        {
-            _key = BuildKey(_states);
-            Changed?.Invoke(this, state);
-        }
-
-        private void OnAreaRemoved(object sender, AreaExtended area)
-        {
-            Remove(_states[area.Area.ID]);
-        }
-
-        // private void OnAreaCombinedDestroyed(object sender, AreaCombined area)
-        // {
-        //     AreaHelper.LogMessage($"AreaCombined destroyed, find new area with key {_key}");
-        //     AreaCombined = MapExtended.Areas.FirstOrDefault(x => x.AreaStates.Key == _key && x != area);
-        // }
-
-        public void ExposeData()
+        public virtual void ExposeData()
         {
             Scribe_Values.Look(ref _key, "key");
-            Scribe_Collections.Look(ref _states, "states");
-
-            if (Scribe.mode != LoadSaveMode.ResolvingCrossRefs) return;
-
-            if (MapExtended == null)
-            {
-                AreaHelper.LogMessage($"Failed to load AreaStates with id={_key}, MapExtended is null");
-                return;
-            }
-            
-            foreach (var keyValue in _states)
-            {
-                keyValue.Value.AreaExtended = MapExtended.AreaExtended[keyValue.Key];
-                keyValue.Value.AreaExtended.Removed += OnAreaRemoved;
-            }
-
-            if (_key == null) return;
-            
-            AreaCombined = MapExtended.Areas.FirstOrDefault(x => x.AreaStates.Key == _key);
+            Scribe_Collections.Look(ref _states, "states", LookMode.Value, LookMode.Deep);
         }
         
-        public static string BuildKey(Dictionary<int, AreaState> combinedFrom)
+        public override string ToString()
         {
-            if (!combinedFrom.Any()) return null;
+            var combinedFrom = States;
+            
+            if (!combinedFrom.Any()) return "";
             
             var keys = combinedFrom
                 .OrderBy(x => x.Key)
@@ -178,13 +46,67 @@ namespace AreaHelper.Data
             return string.Join(",", keys);
         }
 
-        public void Dispose()
+        public bool HasLayerByArea(Area area, AreaStateLayer layer)
         {
-            foreach (var state in _states.Values)
-                state.AreaExtended.Removed -= OnAreaRemoved;
-            //
-            // if (_areaCombined != null)
-            //     _areaCombined.Destroyed -= OnAreaCombinedDestroyed;
+            return _states.TryGetValue(area.ID, out var state) && state.TryGetLayerState(layer, out _);
+        }
+
+        protected void BuildKey()
+        {
+            _key = ToString();
+        }
+
+        private bool HasCombinedLayer()
+        {
+            return _states.Values.Any(x => x.TryGetLayerState(AreaStateLayer.Combined, out _));
+        }
+
+        private bool HasIncludedCombinedLayer()
+        {
+            return _states.Values.Any(x => x.TryGetLayerState(AreaStateLayer.Combined, out var state) && state);
+        }
+
+        public bool HasOnlyExcludedCombinedLayer()
+        {
+            return HasCombinedLayer() && !HasIncludedCombinedLayer();
+        }
+
+        public bool HasOnlyExcludedLayers()
+        {
+            return _states.Values.All(x => !x.Include);
+        }
+
+        private void Remove(int id, AreaStateLayer layer)
+        {
+            if (!_states.ContainsKey(id)) return;
+            _states[id].Remove(layer);
+            
+            if (!_states[id].HasLayers())
+                _states.Remove(id);
+            
+            BuildKey();
+        }
+
+        public void Remove(Area area, AreaStateLayer layer)
+        {
+            Remove(area.ID, layer);
+        }
+
+        public void Remove(Area area)
+        {
+            _states.Remove(area.ID);
+            BuildKey();
+        }
+
+        public void SetOrAdd(Area area, bool include, AreaStateLayer layer)
+        {
+            var id = area.ID;
+            
+            if (!_states.TryGetValue(id, out var state))
+                _states.Add(id, state = new AreaState(area));
+            
+            state.SetOrAdd(layer, include);
+            BuildKey();
         }
     }
 }

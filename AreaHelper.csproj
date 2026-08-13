@@ -63,29 +63,28 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="AreaCombined.cs" />
-        <Compile Include="AreaExcluded.cs" />
-        <Compile Include="AreaFullFilled.cs" />
         <Compile Include="AreaHelper.cs" />
-        <Compile Include="Data\AreaChangedArgs.cs" />
+        <Compile Include="AreaHelperLogic.cs" />
+        <Compile Include="AreaHelperMod.cs" />
+        <Compile Include="AreaHelperUI.cs" />
+        <Compile Include="Areas\AreaCombined.cs" />
+        <Compile Include="Areas\AreaExcluded.cs" />
+        <Compile Include="Areas\AreaFullFilled.cs" />
         <Compile Include="Data\AreaSelectState.cs" />
         <Compile Include="Data\AreaState.cs" />
         <Compile Include="Data\AreaStateLayer.cs" />
         <Compile Include="Data\AreaStates.cs" />
+        <Compile Include="Data\MapIndexedStore.cs" />
+        <Compile Include="Data\PawnAreaStates.cs" />
         <Compile Include="DebugActions.cs" />
-        <Compile Include="Events.cs" />
-        <Compile Include="Extended\AreaExtended.cs" />
-        <Compile Include="Extended\MapExtended.cs" />
-        <Compile Include="Extended\PawnExtended.cs" />
         <Compile Include="Patches\Area.cs" />
         <Compile Include="Patches\AreaAllowedGUI.cs" />
         <Compile Include="Patches\AreaManager.cs" />
-        <Compile Include="Patches\Game.cs" />
+        <Compile Include="Patches\Gravship.cs" />
+        <Compile Include="Patches\GravshipPlacementUtility.cs" />
         <Compile Include="Patches\Map.cs" />
-        <Compile Include="Patches\Pawn.cs" />
         <Compile Include="Patches\PawnPlayerSettings.cs" />
         <Compile Include="Properties\AssemblyInfo.cs"/>
-        <Compile Include="Tasks.cs" />
         <Compile Include="Textures.cs" />
     </ItemGroup>
     <ItemGroup>

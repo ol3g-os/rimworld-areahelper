@@ -4,12 +4,12 @@
     <author>ol3g-os</author>
     <packageId>ol3gos.AreaHelper</packageId>
     <description>
-        Adds new actions to AreaManager (inclusion/exclusion) and combinations of these actions.
-        
-        Actions on areas in AreaManager:
-        shift+click = include(remove inclusion if was included) 
-        alt+click = exclude(remove exclusion if was excluded)
-        shift/alt+mouseover = show combined area for selected Thing
+    Adds new actions to AreaManager (inclusion/exclusion) and combinations of these actions.
+    
+    Actions on areas in AreaManager:
+    shift+click = include(remove inclusion if was included) 
+    alt+click = exclude(remove exclusion if was excluded)
+    shift/alt+mouseover = show combined area for selected Thing
     </description>
     <supportedVersions>
         <li>1.5</li>

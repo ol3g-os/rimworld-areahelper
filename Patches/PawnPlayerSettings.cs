@@ -11,7 +11,7 @@ namespace AreaHelper.Patches
     {
         static void Postfix(ref Pawn ___pawn, ref Area __result)
         {
-            __result = Tasks.GetPawnArea(___pawn) ?? __result;
+            __result = AreaHelperLogic.OnGetPawnArea(___pawn) ?? __result;
         }
     }
     
@@ -22,12 +22,12 @@ namespace AreaHelper.Patches
     {
         static bool Prefix(ref Pawn ___pawn)
         {
-            return Events.FireBeforeAreaRestrictionInPawnCurrentMapSet(___pawn);;
+            return AreaHelperLogic.OnBeforeAreaRestrictionInPawnCurrentMapSet(___pawn);;
         }
         
         static void Postfix(ref Pawn ___pawn)
         {
-            Events.FireAreaRestrictionInPawnCurrentMapSet(___pawn);
+            AreaHelperLogic.OnAreaRestrictionInPawnCurrentMapSet(___pawn);
         }
     }
 }

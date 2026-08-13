@@ -9,7 +9,7 @@ namespace AreaHelper.Patches
     {
         static void Postfix(Area area)
         {
-            Events.FireAreaRemoved(area);
+            AreaHelperLogic.OnAreaRemoved(area);
         }
     }
     
@@ -19,12 +19,12 @@ namespace AreaHelper.Patches
     {
         static void Prefix(AreaManager __instance)
         {
-            Events.FireBeforeExposeData(__instance);
+            AreaHelperLogic.OnBeforeExposeData(__instance);
         }
         
         static void Postfix(AreaManager __instance)
         {
-            Events.FireExposeData(__instance);
+            AreaHelperLogic.OnExposeData(__instance);
         }
     }
     
@@ -34,7 +34,7 @@ namespace AreaHelper.Patches
     {
         static void Postfix(AreaManager __instance)
         {
-            Events.FireAreaManagerUpdate(__instance);
+            AreaHelperLogic.OnAreaManagerUpdate(__instance);
         }
     }
 }

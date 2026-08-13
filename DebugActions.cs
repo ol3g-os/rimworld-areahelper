@@ -5,41 +5,69 @@ namespace AreaHelper
 {
     public static class DebugActions
     {
-        [DebugAction(nameof(AreaHelper), nameof(AllCombinedKeys), actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.Playing)]
-        public static void AllCombinedKeys()
+        private static void LogMessage(string message, int indent = 0) => AreaHelperLogic.LogMessage(message, indent, true); 
+        
+        [DebugAction(nameof(AreaHelper), nameof(LogAreasCombinedInfo), actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.Playing)]
+        public static void LogAreasCombinedInfo()
         {
-            foreach (var mapExtended in AreaHelper.Current.MapExtended.Values)
+            // Map: id
+            //   AreaCombined: key
+            //     UsingAreas: count
+            //       AreaName(id): state
+            //     UsedByPawns: count
+            //       Name1(id)
+            //       Name2(id)
+            
+            LogMessage($"==={nameof(LogAreasCombinedInfo)}===");
+
+            var areaData = AreaHelper.Instance.AreaCombinedByMap.Data;
+
+            foreach (var (mapId, areaCombinedByKey) in areaData)
             {
-                AreaHelper.LogMessage($"map={mapExtended.Map.uniqueID}");
-                foreach (var areaCombined in mapExtended.Areas)
+                LogMessage($"Map: {mapId}");
+                
+                foreach (var (stateKey, areaCombined) in areaCombinedByKey.Data)
                 {
-                    AreaHelper.LogMessage($"key={areaCombined.AreaStates.Key}");
+                    LogMessage($"AreaCombined: {stateKey}", 1);
+                    
+                    LogMessage($"UsingAreas: {areaCombined.AreaStates.States.Count}", 2);
+                    
+                    foreach (var (_, areaState) in areaCombined.AreaStates.States)
+                    {
+                        LogMessage($"{areaState.Area.Label}({areaState.Area.ID}): {areaState.Include}", 3);
+                    }
+                    
+                    var usedByPawns = AreaHelperLogic.GetPawnAreaStatesByStateKey(areaCombined.Map, stateKey);
+
+                    LogMessage($"UsedByPawns: {usedByPawns.Count}", 2);
+                    
+                    foreach (var pawnAreaStates in usedByPawns)
+                    {
+                        var pawn = pawnAreaStates.Pawn;
+                        LogMessage($"{pawn.LabelShort}({pawn.thingIDNumber})", 3);
+                    }
                 }
             }
         }
         
-        [DebugAction(nameof(AreaHelper), nameof(AllAreas), actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.Playing)]
-        public static void AllAreas()
+        [DebugAction(nameof(AreaHelper), nameof(LogPawnsStatesInfo), actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.Playing)]
+        public static void LogPawnsStatesInfo()
         {
-            foreach (var mapExtended in AreaHelper.Current.MapExtended.Values)
+            // Map: id
+            //   Pawn: Name(id), stateKey
+            
+            LogMessage($"==={nameof(LogPawnsStatesInfo)}===");
+            
+            var pawnData = AreaHelper.Instance.PawnStatesByMap.Data;
+
+            foreach (var (mapId, pawnAreaStatesByPawnId) in pawnData)
             {
-                AreaHelper.LogMessage($"map={mapExtended.Map.uniqueID}");
-                foreach (var area in mapExtended.Map.areaManager.AllAreas)
+                LogMessage($"Map: {mapId}");
+
+                foreach (var (_, pawnAreaStates) in pawnAreaStatesByPawnId.Data)
                 {
-                    AreaHelper.LogMessage($"key={area.ID} caption={area.Label}");
-                }
-            }
-        }
-        
-        [DebugAction(nameof(AreaHelper), nameof(AllPawnAreas), actionType = DebugActionType.Action, allowedGameStates = AllowedGameStates.Playing)]
-        public static void AllPawnAreas()
-        {
-            foreach (var pawn in AreaHelper.Current.Pawns.Values)
-            {
-                AreaHelper.LogMessage($"Pawn={pawn.Pawn.ThingID}");
-                foreach (var states in pawn.AreaStatesByMap)
-                {
-                    AreaHelper.LogMessage($"key={states.Key} value={states.Value}");
+                    var pawn = pawnAreaStates.Pawn;
+                    LogMessage($"Pawn: {pawn.LabelShort}({pawn.thingIDNumber}) {pawnAreaStates.Key}", 1);
                 }
             }
         }

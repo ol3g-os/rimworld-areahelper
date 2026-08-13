@@ -1,48 +1,40 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using AreaHelper.Extended;
+using JetBrains.Annotations;
 using Verse;
 
 namespace AreaHelper.Data
 {
     public class AreaState : IExposable
     {
+        public bool Include => _layers.Count > 0 && _layers.Values.All(x => x);
+
+        private Area _area;
+
+        public Area Area => _area;
+
+        private Dictionary<AreaStateLayer, bool> _layers = new Dictionary<AreaStateLayer, bool>();
+        
+        [UsedImplicitly]
         public AreaState()
         {
         }
         
-        public AreaState(AreaExtended area)
+        public AreaState(Area area)
         {
-            AreaExtended = area;
+            _area = area;
         }
 
-        public Area Area => AreaExtended.Area;
-        
-        public AreaExtended AreaExtended { get; set; }
-        
-        public bool Include => _layers.Values.All(x => x);
-
-        [Obsolete]
-        private bool _include;
-
-        private Dictionary<AreaStateLayer, bool> _layers = new Dictionary<AreaStateLayer, bool>();
-
-        public void ToggleLayer(AreaStateLayer layer, bool state)
+        public AreaState(AreaState state)
         {
-            AreaHelper.LogMessage($"{nameof(AreaState)}: {nameof(ToggleLayer)}: {Area.ID} toggleLayer={layer}, state={state}");
-            _layers.SetOrAdd(layer, state);
+            _area = state._area;
+            _layers = new Dictionary<AreaStateLayer, bool>(state._layers);
         }
         
-        public void RemoveLayer(AreaStateLayer layer)
+        public AreaState(AreaState state, Area area)
         {
-            var removed = _layers.Remove(layer);
-            AreaHelper.LogMessage($"{nameof(AreaState)}: {nameof(RemoveLayer)}: removed={removed}, count={_layers.Count}");
-        }
-
-        public bool HasState()
-        {
-            return _layers.Any();
+            _area = area;
+            _layers = new Dictionary<AreaStateLayer, bool>(state._layers);
         }
 
         public bool TryGetLayerState(AreaStateLayer layer, out bool state)
@@ -52,15 +44,30 @@ namespace AreaHelper.Data
         
         public void ExposeData()
         {
+            Scribe_References.Look(ref _area, "area");
             Scribe_Collections.Look(ref _layers, "layers");
-            
-            if (Scribe.mode != LoadSaveMode.Saving)
-                Scribe_Values.Look(ref _include, "include", true); // not save old settings
+        }
+        
+        public void SetOrAdd(AreaStateLayer layer, bool state)
+        {
+            AreaHelperLogic.LogMessage($"{nameof(AreaState)}: {nameof(SetOrAdd)}: {_area.ID} toggleLayer={layer}, state={state}");
+            _layers.SetOrAdd(layer, state);
+        }
+        
+        public void Remove(AreaStateLayer layer)
+        {
+            var removed = _layers.Remove(layer);
+            AreaHelperLogic.LogMessage($"{nameof(AreaState)}: {nameof(Remove)}: removed={removed}, count={_layers.Count}");
+        }
 
-            if (Scribe.mode != LoadSaveMode.LoadingVars) return;
-            
-            if (!_layers.Any()) // if _layers is empty then it prev version of save file
-                _layers.SetOrAdd(AreaStateLayer.Combined, _include);
+        public bool HasLayers()
+        {
+            return _layers.Count > 0;
+        }
+
+        public bool IsValid()
+        {
+            return _area != null;
         }
     }
 }

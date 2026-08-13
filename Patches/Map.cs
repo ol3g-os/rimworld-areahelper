@@ -9,17 +9,7 @@ namespace AreaHelper.Patches
     {
         public static void Postfix(Map __instance)
         {
-            Events.FireMapDispose(__instance);
-        }
-    }
-
-    [HarmonyPatch(typeof(Map))]
-    [HarmonyPatch(nameof(Map.ExposeData))]
-    public class Map_ExposeData_Patch
-    {
-        static void Postfix(Map __instance)
-        {
-            Events.FireExposeData(__instance);
+            AreaHelperLogic.OnMapDispose(__instance);
         }
     }
 }

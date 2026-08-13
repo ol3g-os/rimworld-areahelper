@@ -11,7 +11,7 @@ namespace AreaHelper.Patches
     {
         static void Postfix(Area __instance, IntVec3 c, bool val)
         {
-            Events.FireAreaChanged(__instance, c, val);
+            AreaHelperLogic.OnAreaChanged(__instance, c);
         }
     }
 
@@ -21,17 +21,7 @@ namespace AreaHelper.Patches
     {
         static void Postfix(Area __instance)
         {
-            Events.FireAreaInvert(__instance);
-        }
-    }
-
-    [HarmonyPatch(typeof(Area))]
-    [HarmonyPatch(nameof(Area.ExposeData))]
-    public class Area_ExposeData_Patch
-    {
-        static void Postfix(Area __instance)
-        {
-            Events.FireExposeData(__instance);
+            AreaHelperLogic.OnAreaInvert(__instance);
         }
     }
 
@@ -41,9 +31,7 @@ namespace AreaHelper.Patches
     {
         static bool Prefix(Area __instance)
         {
-            var keyPressed = Event.current.alt || Event.current.shift;
-            var isCoreArea = __instance is Area_Allowed || __instance is Area_Home;
-            return !keyPressed || !isCoreArea;
+            return AreaHelperLogic.OnBeforeMarkForDraw(__instance);
         }
     }
 }
